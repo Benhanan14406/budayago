@@ -5,6 +5,22 @@ from cloudinary.models import *
 
 # Create your models here.
 
+'''
+==================
+README PLEASE UwU
+==================
+
+Konsep relationnya itu mostly spti duolingo, bedanya
+- Course merupakan bahasa yang ingin dipelajari
+- Gaada section sama unit, Jadi course nyambung ke lesson
+- Lesson itu kayak section di duolingo, dan sifatnya level gitu 
+- Course ke Lesson OneToMany Relation
+- User ke Course itu ManyToMany Relation
+- UserProfile itu inherit User Django dengan attr tambahan
+
+Kalau ada yang bingung lagi contact me ajah, sisanya sama spti di dbdiagram :D
+https://dbdiagram.io/d/Budayago-690790246735e11170db9661
+'''
 class RegionalLanguages(models.TextChoices):
     SUNDA = "SU", "Sunda",
     JAWA = "JW", "Jawa",

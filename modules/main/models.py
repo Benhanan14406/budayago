@@ -102,15 +102,13 @@ class Option(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-
 class Explanation(models.Model):
     question = models.OneToOneField(Question, on_delete=models.CASCADE, related_name='explanation')
-    answer = models.TextField(null=True)
+    answer = models.TextField()
     audio_answer = CloudinaryField('audio', resource_type='video', blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)

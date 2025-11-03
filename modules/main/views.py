@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets
 from .models import *
-from serializers import *
+from modules.main.serializers import *
 
 # Create your views here.
 class LessonViewSet(viewsets.ModelViewSet):
@@ -12,6 +12,6 @@ class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
 
-class SoalSusunViewSet(viewsets.ModelViewSet):
-    queryset = SoalSusun.objects.all()
-    serializer_class = SoalSusunSerializer
+class OptionViewSet(viewsets.ModelViewSet):
+    queryset = Option.objects.all()
+    serializer_class = OptionSerializer

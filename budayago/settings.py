@@ -177,4 +177,3 @@ LOGOUT_REDIRECT_URL = "/api/"
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
 SOCIALACCOUNT_CALLBACK_URL = '/auth/google/login/callback/'
 SOCIALACCOUNT_ADAPTER = 'main.adapters.CustomSocialAccountAdapter'
-SOCIALACCOUNT_ADAPTER = 'main.adapters.CustomSocialAccountAdapter'

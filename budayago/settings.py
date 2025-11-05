@@ -50,9 +50,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-<<<<<<< HEAD
-    'main'
-=======
     'main',
     'django.contrib.sites',
     'allauth',
@@ -63,7 +60,6 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'dj_rest_auth',
     'dj_rest_auth.registration',
->>>>>>> 3cea0f9 (OAuth completed)
 ]
 
 SOCIALACCOUNT_PROVIDERS = {
@@ -180,4 +176,5 @@ LOGOUT_REDIRECT_URL = "/api/"
 
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
 SOCIALACCOUNT_CALLBACK_URL = '/auth/google/login/callback/'
+SOCIALACCOUNT_ADAPTER = 'main.adapters.CustomSocialAccountAdapter'
 SOCIALACCOUNT_ADAPTER = 'main.adapters.CustomSocialAccountAdapter'

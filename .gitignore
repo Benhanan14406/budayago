@@ -80,6 +80,7 @@ celerybeat-schedule.*
 # SageMath parsed files
 *.sage.py
 # Environments
+client_secret_2_391957866407-3fpgbqs29noanqeqla7o4thffe91170v.apps.googleusercontent.com.json
 .env*
 !.env.example*
 .venv

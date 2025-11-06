@@ -45,6 +45,9 @@ class Language(models.Model):
     code = models.CharField(max_length=10, unique=True, choices=RegionalLanguages.choices)
     name = models.CharField(max_length=50)
 
+    class Meta:
+        app_label = 'main'
+
     def __str__(self):
         return self.name
 

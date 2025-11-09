@@ -13,7 +13,6 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
-    lookup_field = 'email'  # Use email as lookup since it's the primary key
 
     def get_queryset(self):
         return UserProfile.objects.filter(user=self.request.user)
@@ -22,7 +21,7 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         # Ensure the profile is created for the authenticated user
         serializer.save(user=self.request.user)
 
-    @action(detail=True, methods=['get'])
+    @action(detail=False, methods=['get'])
     def me(self, request):
         # Endpoint to get current user's profile
         profile = self.get_queryset().first()
@@ -31,27 +30,47 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(profile)
         return Response(serializer.data)
 
-    def update(self, request, *args, **kwargs):
-        # Custom update to handle partial updates
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+    @action(detail=False, methods=['put', 'patch'])
+    def update_profile(self, request, *args, **kwargs):
+        profile = self.get_queryset().first()
+        if not profile:
+            return Response(
+                {"detail": "Profile not found."}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        partial = request.method == 'PATCH'
+        serializer = self.get_serializer(
+            profile, 
+            data=request.data, 
+            partial=partial
+        )
         serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+        serializer.save()
         return Response(serializer.data)
-
-    def partial_update(self, request, *args, **kwargs):
-        kwargs['partial'] = True
-        return self.update(request, *args, **kwargs)
     
-    @action(detail=True, methods=['post'])
+    @action(detail=False, methods=['delete'])
+    def delete(self, request):
+        """Delete current user's profile"""
+        profile = self.get_queryset().first()
+        if not profile:
+            return Response(
+                {"detail": "Profile not found."}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        user = profile.user
+        user.delete()
+        profile.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    @action(detail=False, methods=['post'])
     def start_session(self, request, email=None):
         session_id = str(uuid.uuid4())
         return Response({"session_id": session_id})
     
-    @action(detail=True, methods=['post'])
+    @action(detail=False, methods=['post'])
     def end_session(self, request,  email=None):
-        profile = get_object_or_404(UserProfile, pk=email)
+        profile = self.get_queryset().first()
         session_id = request.data.get('session_id')
         start_time_str = request.data.get('start_time')
         end_time_str = request.data.get('end_time')
@@ -85,6 +104,7 @@ class UserProfileViewSet(viewsets.ModelViewSet):
             profile.save()
 
         return Response({'total_minutes_today': streak.total_minutes, "streak": profile.streak})
+    
 
 
 

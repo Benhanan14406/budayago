@@ -112,9 +112,9 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     email = models.EmailField(unique=True, primary_key=True)
     name = models.CharField(max_length=70, blank=False, null=False)
-    age = models.IntegerField(default=0, blank=False, null=False)
+    age = models.IntegerField(default=0, blank=True, null=True)
     avatar = CloudinaryField('image', null=True)
-    region = models.CharField(max_length=50, blank=True, null=True)
+    region = models.CharField(max_length=50, blank=False, null=True)
    
     courses = models.ManyToManyField(Course, through="CourseProgress", related_name='enrolled_users')
     current_course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, blank=True, related_name='active_users')

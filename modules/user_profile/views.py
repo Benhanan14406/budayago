@@ -2,22 +2,25 @@ from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from modules.main.models import UserProfile
+from modules.main.models import UserProfile, DailyStreak
+from django.shortcuts import get_object_or_404
 from .serializers import UserProfileSerializer
+import uuid
+from datetime import  timedelta
+from django.utils import timezone
 
 class UserProfileViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     lookup_field = 'email'  # Use email as lookup since it's the primary key
 
-    # def get_queryset(self):
-    #     # Users can only see their own profile
-    #     return UserProfile.objects.filter(user=self.request.user)
+    def get_queryset(self):
+        return UserProfile.objects.filter(user=self.request.user)
 
-    # def perform_create(self, serializer):
-    #     # Ensure the profile is created for the authenticated user
-    #     serializer.save(user=self.request.user)
+    def perform_create(self, serializer):
+        # Ensure the profile is created for the authenticated user
+        serializer.save(user=self.request.user)
 
     @action(detail=True, methods=['get'])
     def me(self, request):
@@ -40,3 +43,50 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     def partial_update(self, request, *args, **kwargs):
         kwargs['partial'] = True
         return self.update(request, *args, **kwargs)
+    
+    @action(detail=True, methods=['post'])
+    def start_session(self, request, email=None):
+        session_id = str(uuid.uuid4())
+        return Response({"session_id": session_id})
+    
+    @action(detail=True, methods=['post'])
+    def end_session(self, request,  email=None):
+        profile = get_object_or_404(UserProfile, pk=email)
+        session_id = request.data.get('session_id')
+        start_time_str = request.data.get('start_time')
+        end_time_str = request.data.get('end_time')
+
+        if not all ([session_id, start_time_str, end_time_str]):
+            return Response({"error": "missing session, start_time, or end_time"}, status=400)
+        
+        try:
+            start_time = timezone.datetime.fromisoformat(start_time_str.replace('Z', '+00:00'))
+            end_time = timezone.datetime.fromisoformat(end_time_str.replace('Z', '+00:00'))
+        except ValueError:
+            return Response({"error": "Invalid time format"}, status=400)
+        
+        if end_time <= start_time:
+            return Response({"error": "End time must be after start time"}, status=400)
+        
+        duration = int((end_time - start_time).total_seconds()/60)
+        today = timezone.now().date()
+
+        streak, created = DailyStreak.objects.get_or_create(
+            user=profile, date=today, defaults={'total_minutes': 0}
+        )
+        streak.total_minutes += duration
+        streak.save()
+        
+        if streak.total_minutes >= 5 and profile.last_streak_date != today:
+            if profile.last_streak_date and today > profile.last_streak_date + timedelta(days=1):
+                profile.streak = 0
+            profile.streak += 1
+            profile.last_streak_date = today
+            profile.save()
+
+        return Response({'total_minutes_today': streak.total_minutes, "streak": profile.streak})
+
+
+
+
+        

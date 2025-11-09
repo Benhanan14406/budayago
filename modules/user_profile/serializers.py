@@ -16,6 +16,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'user',
             'email', 'name', 'age', 'region',
             'courses', 'current_course', 'xp', 'level', 'gems',
+            'streak', 'last_streak_date',
             'last_login', 'created_at', 'updated_at'
         ]
         read_only_fields = ['email', 'created_at', 'updated_at', 'last_login']

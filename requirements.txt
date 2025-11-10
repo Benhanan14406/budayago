@@ -25,3 +25,5 @@ whitenoise
 django-allauth
 dj-rest-auth
 cryptography
+langchain
+langchain-google-genai

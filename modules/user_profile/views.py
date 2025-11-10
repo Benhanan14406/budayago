@@ -18,12 +18,10 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         return UserProfile.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        # Ensure the profile is created for the authenticated user
         serializer.save(user=self.request.user)
 
     @action(detail=False, methods=['get'])
     def me(self, request):
-        # Endpoint to get current user's profile
         profile = self.get_queryset().first()
         if not profile:
             return Response({"detail": "Profile not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -71,7 +69,7 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def end_session(self, request,  email=None):
         profile = self.get_queryset().first()
-        session_id = request.data.get('session_id')
+        session_id = request.dat.get('session_id')
         start_time_str = request.data.get('start_time')
         end_time_str = request.data.get('end_time')
 

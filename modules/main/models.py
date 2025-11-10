@@ -1,7 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
-import uuid 
+import uuid
 from cloudinary.models import *
+from datetime import date, timedelta
 
 # Create your models here.
 
@@ -44,6 +45,9 @@ class Language(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     code = models.CharField(max_length=10, unique=True, choices=RegionalLanguages.choices)
     name = models.CharField(max_length=50)
+
+    class Meta:
+        app_label = 'main'
 
     def __str__(self):
         return self.name
@@ -114,9 +118,9 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     email = models.EmailField(unique=True, primary_key=True)
     name = models.CharField(max_length=70, blank=False, null=False)
-    age = models.IntegerField(default=0, blank=False, null=False)
+    age = models.IntegerField(default=0, blank=True, null=True)
     avatar = CloudinaryField('image', null=True)
-    region = models.CharField(max_length=50, blank=True, null=True)
+    region = models.CharField(max_length=50, blank=False, null=True)
    
     courses = models.ManyToManyField(Course, through="CourseProgress", related_name='enrolled_users')
     current_course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, blank=True, related_name='active_users')
@@ -124,6 +128,9 @@ class UserProfile(models.Model):
     xp = models.PositiveBigIntegerField(default=0, blank=True)
     level = models.PositiveIntegerField(default=1, blank=True)
     gems = models.PositiveBigIntegerField(default=0, blank=True)
+
+    streak = models.PositiveIntegerField(default=0, blank=True)
+    last_streak_date = models.DateField(null=True, blank=True)
 
     last_login = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -153,7 +160,6 @@ class LessonProgress(models.Model):
     progress_percentage = models.FloatField(default=0.0, help_text="Persentase penyelesaian lesson (0–100%)")
     last_attempt = models.DateTimeField(auto_now=True)
     
-# Konsep
 class AIConversation(models.Model):
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='ai_conversations')
     topic = models.CharField(max_length=100)
@@ -162,3 +168,14 @@ class AIConversation(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+class DailyStreak(models.Model):
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='daily_streak')
+    date = models.DateField(help_text="Date of the streak")
+    total_minutes = models.PositiveIntegerField(default=0, help_text="Total menit menggunakan app dalam satu hari")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'date')
+

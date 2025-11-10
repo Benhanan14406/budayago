@@ -3,14 +3,13 @@ from django.contrib.auth.decorators import login_required
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.http import JsonResponse
 
+from .models import *
+
 def home(request):
     return render(request, 'home.html')
 
 @login_required
 def get_jwt_token(request):
-    """
-    Generate JWT token for authenticated user
-    """
     user = request.user
     refresh = RefreshToken.for_user(user)
     

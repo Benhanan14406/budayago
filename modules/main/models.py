@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AbstractUser
 import uuid 
 from cloudinary.models import *
 
@@ -104,8 +104,9 @@ class Explanation(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
 
-class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+class UserProfile(AbstractUser):
+    # user = models.OneToOneField(User, on_delete=models.CASCADE)
+    username = models.CharField(max_length=70, blank=False, null=False)
     email = models.EmailField(unique=True, primary_key=True)
     name = models.CharField(max_length=70, blank=False, null=False)
     age = models.IntegerField(default=0, blank=False, null=False)
@@ -122,6 +123,9 @@ class UserProfile(models.Model):
     last_login = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
 
     def __str__(self):
         return self.user.username

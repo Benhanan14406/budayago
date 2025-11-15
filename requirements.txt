@@ -27,3 +27,4 @@ dj-rest-auth
 cryptography
 langchain
 langchain-google-genai
+pymemcache

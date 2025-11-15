@@ -19,6 +19,7 @@ from django.urls import path, include, re_path
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from modules.main.views import chat
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -39,4 +40,5 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('auth/', include('allauth.socialaccount.urls')),
     path('api/', include('main.urls')),
+    path('ai-conversation/', chat, name="chat")
 ]

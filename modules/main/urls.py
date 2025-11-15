@@ -8,6 +8,6 @@ urlpatterns = [
     path('token/', views.get_jwt_token, name='get_token'),
     path('projects/', views.projects, name='projects'),
     path('user-profile/', include('user_profile.urls')),
-    path('chat/', include('ai_conversation.urls'))
+    path('chat/', include('ai_conversation.urls')),
 ]
 

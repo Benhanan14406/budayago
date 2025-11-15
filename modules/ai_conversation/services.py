@@ -9,7 +9,7 @@ from modules.ai_conversation.const import JAWA_PRE_PROMPT, SUNDA_PRE_PROMPT
 from transformers import VitsModel, AutoTokenizer, Wav2Vec2ForCTC, Wav2Vec2Processor
 import torchaudio 
 import torch
-import whisper
+import os
 
 # stt_model = whisper.load_model("tiny")
 
@@ -75,13 +75,27 @@ def get_gemini_response(user_prompt, bahasa, user_profile,chat_history=[]):
     
 
 def get_tts_response(gemini_response):
+    """
+    Converts text to speech, saves it to a static file, and returns the URL path.
+    """
     text = gemini_response
     inputs = tokenizer(text, return_tensors="pt")
 
     with torch.no_grad():
         output = tts_model(**inputs).waveform
 
-    scipy.io.wavfile.write("techno.wav", rate=tts_model.config.sampling_rate, data=output.squeeze().cpu().numpy())
+    # NOTE: For a real application, you would save this to a unique filename
+    # and handle media file storage properly. For this boilerplate, we'll
+    # overwrite the same file in the static directory.
+    output_path = "static/audio/response.wav"
+    output_url = "/static/audio/response.wav"
+    
+    # Ensure the directory exists
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    scipy.io.wavfile.write(output_path, rate=tts_model.config.sampling_rate, data=output.squeeze().cpu().numpy())
+    
+    return output_url
 
 # def transcribe_audio(audio_file):
 #     try:

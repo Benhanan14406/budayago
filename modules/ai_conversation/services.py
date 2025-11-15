@@ -5,6 +5,11 @@ from langchain_core.output_parsers import StrOutputParser
 from django.conf import settings
 from .const import JAWA_PRE_PROMPT, SUNDA_PRE_PROMPT
 
+import torch
+import torchaudio
+from datasets import load_dataset
+from transformers import Wav2VecForCTC, Wav2Vec2Processor
+
 # Create your views here.
 def get_user_context(user_profile):
     courses_str = ", ".join(user_profile.get("courses", []))
@@ -37,7 +42,7 @@ def get_gemini_response(user_prompt, bahasa, user_profile,chat_history=[]):
         ai_language = JAWA_PRE_PROMPT
 
     messages = [
-        ("system", ai_language + "\n" + get_user_context(DUMMY_USER)),
+        ("system", ai_language + "\n" + get_user_context(user_profile)),
     ]
 
     for msg in chat_history:

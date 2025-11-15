@@ -10,3 +10,4 @@ urlpatterns = [
     path('user-profile/', include('user_profile.urls')),
     path('chat/', include('ai_conversation.urls'))
 ]
+

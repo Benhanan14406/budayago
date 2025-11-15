@@ -28,3 +28,6 @@ cryptography
 langchain
 langchain-google-genai
 pymemcache
+torch # WARNING: Large Library!
+torchaudio
+transformers

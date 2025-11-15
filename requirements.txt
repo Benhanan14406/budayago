@@ -30,4 +30,7 @@ langchain-google-genai
 pymemcache
 torch # WARNING: Large Library!
 torchaudio
+torchcodec
 transformers
+openai-whisper
+scipy

@@ -4,11 +4,28 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from django.conf import settings
 from .const import JAWA_PRE_PROMPT, SUNDA_PRE_PROMPT
-
+import scipy
+from modules.ai_conversation.const import JAWA_PRE_PROMPT, SUNDA_PRE_PROMPT
+from transformers import VitsModel, AutoTokenizer, Wav2Vec2ForCTC, Wav2Vec2Processor
+import torchaudio 
 import torch
-import torchaudio
-from datasets import load_dataset
-from transformers import Wav2VecForCTC, Wav2Vec2Processor
+import whisper
+
+# stt_model = whisper.load_model("tiny")
+
+wav2vec_processor = Wav2Vec2Processor.from_pretrained("indonesian-nlp/wav2vec2-indonesian-javanese-sundanese")
+wav2vec_model = Wav2Vec2ForCTC.from_pretrained("indonesian-nlp/wav2vec2-indonesian-javanese-sundanese")
+
+wav2vec_resampler = torchaudio.transforms.Resample(48_000, 16_000)
+
+gemini = ChatGoogleGenerativeAI(
+    model="gemini-2.5-flash",
+    google_api_key=settings.GOOGLE_API_KEY,
+    temperature=0.7
+)
+
+tts_model = VitsModel.from_pretrained("facebook/mms-tts-ind")
+tokenizer = AutoTokenizer.from_pretrained("facebook/mms-tts-ind")
 
 # Create your views here.
 def get_user_context(user_profile):
@@ -29,11 +46,6 @@ def get_user_context(user_profile):
     return user_context
 
 def get_gemini_response(user_prompt, bahasa, user_profile,chat_history=[]):
-    gemini = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
-        google_api_key=settings.GOOGLE_API_KEY,
-        temperature=0.7
-    )
     
     ai_language = ""
     if bahasa.lower() == "sunda":
@@ -60,3 +72,55 @@ def get_gemini_response(user_prompt, bahasa, user_profile,chat_history=[]):
         return response
     except Exception as e:
         return f"Error Connecting to Gemini: {str(e)}"
+    
+
+def get_tts_response(gemini_response):
+    text = gemini_response
+    inputs = tokenizer(text, return_tensors="pt")
+
+    with torch.no_grad():
+        output = tts_model(**inputs).waveform
+
+    scipy.io.wavfile.write("techno.wav", rate=tts_model.config.sampling_rate, data=output.squeeze().cpu().numpy())
+
+# def transcribe_audio(audio_file):
+#     try:
+#         audio = whisper.load_audio(audio_file)
+#         audio = whisper.pad_or_trim(audio)
+#         mel = whisper.log_mel_spectrogram(audio, n_mels=stt_model.dims.n_mels).to(stt_model.device)
+
+#         # detect the spoken language
+#         _, probs = stt_model.detect_language(mel)
+#         print(f"Detected language: {max(probs, key=probs.get)}")
+
+#         # decode the audio
+#         options = whisper.DecodingOptions()
+#         result = whisper.decode(stt_model, mel, options)
+
+#         # print the recognized text
+#         print(result.text)
+#     except Exception as e:
+#         print(f"Error during transcription: {e}")
+#         return None
+
+
+def transcribe_audio(audio_file):
+    try:
+        speech_array, sampling_rate = torchaudio.load(audio_file)
+
+        if sampling_rate != 16_000:
+            print(f"Resampling audio dari {sampling_rate}Hz ke 16000Hz...")
+            speech_array = wav2vec_resampler(speech_array)
+
+        inputs = wav2vec_processor(speech_array.squeeze().numpy(), sampling_rate=16_000, return_tensors="pt", padding=True)
+
+        with torch.no_grad():
+            logits = wav2vec_model(inputs.input_values, attention_mask=inputs.attention_mask).logits
+
+        predicted_ids = torch.argmax(logits, dim=-1)
+        transcription = wav2vec_processor.batch_decode(predicted_ids)
+
+        return transcription[0]
+    except Exception as e:
+        print(f"Error during Wav2Vec2 transcription: {e}")
+        return None

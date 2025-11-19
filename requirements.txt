@@ -25,3 +25,12 @@ whitenoise
 django-allauth
 dj-rest-auth
 cryptography
+langchain
+langchain-google-genai
+pymemcache
+torch # WARNING: Large Library!
+torchaudio
+torchcodec
+transformers
+scipy
+drf-yasg

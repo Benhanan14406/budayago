@@ -6,6 +6,9 @@ from django.http import JsonResponse
 def home(request):
     return render(request, 'home.html')
 
+def chat(request):
+    return render(request, 'index.html')
+
 @login_required
 def get_jwt_token(request):
     """

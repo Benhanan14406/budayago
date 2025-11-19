@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Real-Time AI Conversation</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        background-color: #f0f2f5;
+        color: #1c1e21;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+      .chat-container {
+        width: 100%;
+        max-width: 600px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        height: 80vh;
+      }
+      .conversation-log {
+        flex-grow: 1;
+        padding: 20px;
+        overflow-y: auto;
+        border-bottom: 1px solid #dddfe2;
+      }
+      .controls {
+        padding: 20px;
+        text-align: center;
+      }
+      button {
+        font-size: 16px;
+        padding: 10px 20px;
+        border-radius: 20px;
+        border: none;
+        cursor: pointer;
+        margin: 0 10px;
+        transition: background-color 0.3s;
+      }
+      #startButton {
+        background-color: #42b72a;
+        color: white;
+      }
+      #startButton:disabled {
+        background-color: #a5d6a7;
+      }
+      #stopButton {
+        background-color: #fa3e3e;
+        color: white;
+      }
+      #stopButton:disabled {
+        background-color: #fab3b3;
+      }
+      .message {
+        margin-bottom: 15px;
+        padding: 10px;
+        border-radius: 18px;
+        max-width: 75%;
+        line-height: 1.4;
+      }
+      .user-message {
+        background-color: #0084ff;
+        color: white;
+        margin-left: auto;
+        border-bottom-right-radius: 4px;
+      }
+      .ai-message {
+        background-color: #e4e6eb;
+        color: #050505;
+        margin-right: auto;
+        border-bottom-left-radius: 4px;
+      }
+      .status {
+        text-align: center;
+        padding: 10px;
+        color: #606770;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="chat-container">
+      <div class="conversation-log" id="conversationLog">
+        <div class="message ai-message">
+          Halo! Silakan tekan 'Start Recording' untuk mulai berbicara.
+        </div>
+      </div>
+      <div class="status" id="status">Ready</div>
+      <div class="controls">
+        <button id="startButton">Start Recording</button>
+        <button id="stopButton" disabled>Stop Recording</button>
+      </div>
+      <audio id="audioPlayer"></audio>
+    </div>
+
+    <script>
+      const startButton = document.getElementById("startButton");
+      const stopButton = document.getElementById("stopButton");
+      const audioPlayer = document.getElementById("audioPlayer");
+      const conversationLog = document.getElementById("conversationLog");
+      const statusDiv = document.getElementById("status");
+
+      let mediaRecorder;
+      let audioChunks = [];
+
+      startButton.addEventListener("click", async () => {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          alert("Your browser does not support audio recording.");
+          return;
+        }
+
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+          mediaRecorder = new MediaRecorder(stream);
+
+          mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+          };
+
+          mediaRecorder.onstop = sendAudioToServer;
+
+          startButton.disabled = true;
+          stopButton.disabled = false;
+          statusDiv.textContent = "Recording...";
+          mediaRecorder.start();
+        } catch (err) {
+          console.error("Error accessing microphone:", err);
+          statusDiv.textContent = "Error: Could not access microphone.";
+        }
+      });
+
+      stopButton.addEventListener("click", () => {
+        startButton.disabled = false;
+        stopButton.disabled = true;
+        statusDiv.textContent = "Processing...";
+        mediaRecorder.stop();
+      });
+
+      async function sendAudioToServer() {
+        const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+        audioChunks = []; // Clear chunks for next recording
+
+        const formData = new FormData();
+        formData.append("audio", audioBlob, "recording.wav");
+        // You can add other data here if needed, e.g., selected language
+        // formData.append('bahasa', 'sunda');
+
+        try {
+          // IMPORTANT: Adjust this URL to your actual API endpoint
+          const response = await fetch("/api/chat/", {
+            method: "POST",
+            // Note: We don't set Content-Type header for FormData, browser does it.
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error(`Server responded with ${response.status}`);
+          }
+
+          const data = await response.json();
+
+          addMessageToLog(data.user_text, "user");
+          addMessageToLog(data.ai_text, "ai");
+
+          // Play AI audio response
+          audioPlayer.src = data.ai_audio_url + "?t=" + new Date().getTime(); // Cache-busting
+          audioPlayer.play();
+          statusDiv.textContent = "Ready";
+        } catch (error) {
+          console.error("Error sending audio to server:", error);
+          statusDiv.textContent = "Error: Could not process audio.";
+        }
+      }
+
+      function addMessageToLog(text, sender) {
+        const messageDiv = document.createElement("div");
+        messageDiv.classList.add(
+          "message",
+          sender === "user" ? "user-message" : "ai-message"
+        );
+        messageDiv.textContent = text;
+        conversationLog.appendChild(messageDiv);
+        conversationLog.scrollTop = conversationLog.scrollHeight; // Auto-scroll
+      }
+    </script>
+  </body>
+</html>
